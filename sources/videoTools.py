@@ -8,13 +8,205 @@ import os
 import sys
 import csv
 import pathlib
+import glob
 import numpy as np
 from numpy import inf
 import matplotlib.pyplot as plt
 
 
+def vid_from_seq(imPath, vidPath=None, frStart=None, frEnd=None, fps=30, imQuality=0.75, prefix='DSC',
+                 nDigits=5, inSuffix='JPG', outSuffix='mp4', downSample=False, roi=None, vertPix=None, 
+                 vMode=False):
+    """Creates a movie from an image sequence.
+       imPath (str)      - Path to directory holding image file.
+       vidPath (str)     - Path to output video file. Defaults to imPath.
+       frStart (int)     - Frame number to begin working with. Will use first frame, if not specified.
+       frEnd (int)       - Frame number to end with. Will use last frame, if not specified.
+       fps (float)       - Frame rate (frames per sec) of input images. Will use same for output.
+       imQuality (float) - image quality (0 - 1).
+       prefix (str)      - Text that the image filenames begin with.
+       nDigits (int)     - Number of digits in image filenames.
+       inSuffix (str)    - Suffix of image file names.
+       outSuffix (str)   - Suffix for movie file.
+       downSample (bool) - Whether to downsample resolution.
+       roi (int)         - Region-of-interest coordinates (in pixels): [x y w h]
+       vertPix (int)     - Size of video frames in vertical pixels 
+       vMode (bool)      - Verbose mode, shows more output from ffmpeg
+    """
+
+    if downSample and vertPix is None:
+        raise ValueError('You need to provide vertPix value, if you want to downsample the video')  
+
+    # Default to pwd, if no out path
+    if vidPath is None:
+        vidPath = imPath + os.path.sep + 'output_video' + '.' + outSuffix
+
+    # Quality value, on the 51-point scale used by ffmpeg
+    qVal = 51 * (1 - imQuality)
+
+    # Check for path
+    if not os.path.isdir(imPath):
+        raise ValueError('Image path not found: ' + imPath)  
+
+    # Listing of image files
+    imFileList = glob.glob(imPath + os.path.sep + prefix + '*.' + inSuffix)
+
+    # Check imFileList
+    if len(imFileList)==0:
+        raise ValueError('No images with ' + inSuffix + ' extension found in ' + imPath) 
+   
+    # Find start and end frames, if none given
+    if (frStart is None) or (frEnd is None):
+        frNums = []
+        # Loop thru filenames and record numbers
+        for cFile in imFileList:
+            frNums.append(int(cFile[-(len(inSuffix)+nDigits+1):-(len(inSuffix)+1)]))
+
+        # Check frame interval numbering
+        if min(np.diff(np.sort(frNums))) != max(np.diff(np.sort(frNums))):
+            raise ValueError('Interval between frame numbers not equal among all files')
+        
+        # Define range of frame numbers
+        frStart = min(frNums)
+        frEnd   = max(frNums)
+
+    # Total number of frames
+    nFrames = frEnd - frStart
+
+    # Match output with input frame rate
+    fpsOut = fps
+
+    # Start building the ffmpeg command
+    command = f"ffmpeg -framerate {fps} -start_number {frStart} -i {imPath}/DSC%0{nDigits}d.{inSuffix} -vframes {nFrames} "
+    
+    # Commands for an image sequence. Note that "-loglevel quiet" makes ffmpeg less verbose. Remove that for troubleshooting
+    if not vMode:
+        command += f"-loglevel quiet "
+    
+    # Specify compression
+    command += f"-y -vcodec libx264 -pix_fmt yuv420p -an -r {fpsOut} -crf {qVal} "
+
+    # Add downsampling and cropping commands
+    if roi is not None:
+        if downSample:
+            # command += f"\"crop= {r[2]}:{r[3]}:{r[0]}:{r[1]}\" "
+            command += f"-vf \"crop= {roi[2]}:{roi[3]}:{roi[0]}:{roi[1]}, scale={vertPix}:-1\" "
+        else:
+            command += f"-vf \"crop= {roi[2]}:{roi[3]}:{roi[0]}:{roi[1]}\" "
+    elif downSample:
+        command += f"-vf \"scale={vertPix}:-1\" "
+
+    # Specify output file
+    command += f"-timecode 00:00:00:00 '{vidPath}'"
+
+    # Report attempt
+    print('    Reading images from: ' + imPath)
+    print('    Making output movie file: ' + vidPath)
+
+    # Excute ffmpeg
+    os.system(command)
+
+    # Wrap up
+    print('    Completed writing ' + str(nFrames) + ' frames')
+
+ 
+def vid_convert(vInPath, vOutPath=None, frStart=None, frEnd=None, imQuality=0.75, prefix='DSC',
+                 nDigits=5, inSuffix='JPG', outSuffix='mp4', downSample=False, roi=None, vertPix=None, 
+                 vMode=False):
+    """Creates a movie from an image sequence.
+       vInPath (str)     - Path to input video file.
+       vOutPath (str)    - Path to output video file. Defaults to same as vInPath.
+       frStart (int)     - Frame number to begin working with. Will use first frame, if not specified.
+       frEnd (int)       - Frame number to end with. Will use last frame, if not specified.
+       fps (float)       - Frame rate (frames per sec) of input images. Will use same for output.
+       imQuality (float) - image quality (0 - 1).
+       outSuffix (str)   - Video type, given by the suffix for output movie file (if vOutPath not given).
+       downSample (bool) - Whether to downsample resolution.
+       roi (int)         - Region-of-interest coordinates (in pixels): [x y w h]
+       vertPix (int)     - Size of video frames in vertical pixels 
+       vMode (bool)      - Verbose mode, shows more output from ffmpeg
+    """
+
+    # overwrite existing file
+    overWrite = True
+
+    # Remove audio
+    noAudio = True
+
+    # Check inputs
+    if downSample and vertPix is None:
+        raise ValueError('You need to provide vertPix value, if you want to downsample the video')  
+    elif vOutPath and outSuffix is None:
+        raise ValueError('You need to provide outSuffix, if you do not specify the file name') 
+
+    # Check for path
+    if not os.path.isfile(vInPath):
+        raise ValueError('Movie not found at given path: ' + vInPath) 
+
+    # Default to input path, if no out path provided
+    if vOutPath is None:
+        inFileName = os.path.splitext(os.path.basename(vInPath))
+        vOutPath = os.path.dirname(vInPath) + os.path.sep + inFileName[0] + '.' + outSuffix
+
+    # Quality value, on the 51-point scale used by ffmpeg
+    qVal = 51 * (1 - imQuality)
+
+
+
+    # # Find start and end frames, if none given
+    # if (frStart is None) or (frEnd is None):
+    #     frNums = []
+    #     # Loop thru filenames and record numbers
+    #     for cFile in imFileList:
+    #         frNums.append(int(cFile[-(len(inSuffix)+nDigits+1):-(len(inSuffix)+1)]))
+
+    # # Match output with input frame rate
+    # fpsOut = fps
+
+    # Start building the ffmpeg command
+    command = f"ffmpeg -i {vInPath} "
+
+    # Whether to overwrite existing file
+    if overWrite:
+        command += "-y "
+
+    # Whether to remove audio
+    if noAudio:
+        command += "-an "
+    
+    # "-loglevel quiet" makes ffmpeg less verbose. Remove that for troubleshooting
+    if not vMode:
+        command += f"-loglevel quiet "
+    
+    # Specify compression
+    command += f"-vcodec libx264 -pix_fmt yuv420p -an -crf {qVal} "
+
+    # Add downsampling and cropping commands
+    if roi is not None:
+        if downSample:
+            # command += f"\"crop= {r[2]}:{r[3]}:{r[0]}:{r[1]}\" "
+            command += f"-vf \"crop= {roi[2]}:{roi[3]}:{roi[0]}:{roi[1]}, scale={vertPix}:-1\" "
+        else:
+            command += f"-vf \"crop= {roi[2]}:{roi[3]}:{roi[0]}:{roi[1]}\" "
+    elif downSample:
+        command += f"-vf \"scale={vertPix}:-1\" "
+
+    # Specify output file
+    command += f"-timecode 00:00:00:00 '{vOutPath}'"
+
+    # # Report attempt
+    # print('    Reading images from: ' + imPath)
+    print('    Making output movie file: ' + vOutPath)
+
+    # Excute ffmpeg
+    os.system(command)
+
+    # # Wrap up
+    # print('    Completed writing ' + str(nFrames) + ' frames')
+
 def getFrame(vid_path, fr_num=1):
-    """Reads a single video frame"""
+    """Reads a single video frame.
+    """
 
     # Check for file existance
     if not os.path.isfile(vid_path):
@@ -34,69 +226,94 @@ def getFrame(vid_path, fr_num=1):
 
         return frame
 
-def vidFromSeq(frame_start, imQuality=0.75, prefix="DSC", num_dig=5, suffix="JPG"):
-    """Creates a movie in parent directory from an image sequence in current directory
-       frame_start - Frame number to begin
-       imQuality - image quality (0 - 1)
-       prefix - Text that the image filenames begin with
-       num_dig - Number of digits in image filenames
-    """
-    print("test2")
-    # p is a path object for current directory
-    p = pathlib.Path().absolute() 
-
-    # Define output as file with name of current directory
-    out_path = str(p.parent) + os.path.sep + str(p.parts[-1]) + ".mp4" 
-
-    # Quality value, on the 51-point scale used by ffmpeg
-    qVal = 51 * (1 - imQuality)
-
-    # Define and run command at terminal
-    command = f"ffmpeg -start_number {frame_start}  -i DSC%05d.{suffix} -an -r 15 -crf {qVal}  '{out_path}'"
-    os.system(command)
-
-
-def convertWhole(vid_path, out_path, imQuality=0.75):
-    """Converts a movie (uncropped) into a grayscale and compressed mp4.
-       imQuality - image quality (0 - 1)
-       out_path - full path of video file, with .mp4 extension
+def find_roi(in_path, fr_num=1, show_crosshair=True, from_center=False):
+    """Reads frame of video and prompts to interactively select a roi.
+        in_path (str)           - Can be a path to a movie or image
+        fr_num (int)            - Frame number of movie used to select the roi
+        show_crosshair (bool)   - Whether to show the cross hairs
+        from_center (bool)      - Whether to start drawing the roi from its own center
     """
 
-    # Quality value, on the 51-point scale used by ffmpeg
-    qVal = 51 * (1 - imQuality)
+    # Get extension to movie/image file
+    fName, ext = os.path.splitext(in_path)
 
-    # Define command that uses ffmpeg
-    command = f"ffmpeg -i '{vid_path}' -an -crf {qVal} -vf format=gray '{out_path}'"
-    os.system(command)
+    # Chec if it's a movie
+    if ext=='.mov' or ext=='.mp4' or ext=='.avi':
+        isMovie = True
+    else:
+        isMovie = False
+
+    if isMovie:
+        # Define video object &  video frame
+        vid = cv.VideoCapture(in_path)
+
+        # Get frame and select roi
+        im0 = getFrame(in_path, fr_num)
+    else:
+        # Get frame and select roi
+        im0 = cv.imread(in_path)
+
+    # Create named window
+    cv.namedWindow("ROI_Select", cv.WINDOW_NORMAL)
+    cv.startWindowThread()
+
+    # Select ROI
+    r = cv.selectROI("ROI_Select", im0, show_crosshair, from_center)
+    cv.waitKey()
+    cv.destroyWindow("ROI_Select")
+
+    # close window 
+    cv.waitKey(1)
+    cv.destroyAllWindows()
+
+    # Release video capture
+    if isMovie:
+        vid.release()
+
+    return r
 
 
-def trimDur(vid_path, out_path, tEnd, tStart="00:00:00", imQuality=0.75):
-    """Creates a new video file with a trimmed duration"""
+# def convertWhole(vid_path, out_path, imQuality=0.75):
+#     """Converts a movie (uncropped) into a grayscale and compressed mp4.
+#        imQuality - image quality (0 - 1)
+#        out_path - full path of video file, with .mp4 extension
+#     """
 
-    # Quality value, on the 51-point scale used by ffmpeg
-    qVal = 51 * (1 - imQuality)
+#     # Quality value, on the 51-point scale used by ffmpeg
+#     qVal = 51 * (1 - imQuality)
 
-    # Define and execute ffmpeg command
-    command = f"ffmpeg -i '{vid_path}' -ss {tStart} -to {tEnd} -y '{out_path}'"
-    os.system(command)
+#     # Define command that uses ffmpeg
+#     command = f"ffmpeg -i '{vid_path}' -an -crf {qVal} -vf format=gray '{out_path}'"
+#     os.system(command)
 
 
-def trimDurCropped(vid_path, out_path, r, tEnd, tStart="00:00:00", imQuality=0.75):
-    """Creates a new video file with a trimmed duration and cropped dimensions"""
+# def trimDur(vid_path, out_path, tEnd, tStart="00:00:00", imQuality=0.75):
+#     """Creates a new video file with a trimmed duration"""
 
-    # Quality value, on the 51-point scale used by ffmpeg
-    qVal = 51 * (1 - imQuality)
+#     # Quality value, on the 51-point scale used by ffmpeg
+#     qVal = 51 * (1 - imQuality)
 
-    # Define and execute ffmpeg command
-    # command = f"ffmpeg -i '{vid_path}' -ss {tStart} -to {tEnd} -y '{out_path}'"
+#     # Define and execute ffmpeg command
+#     command = f"ffmpeg -i '{vid_path}' -ss {tStart} -to {tEnd} -y '{out_path}'"
+#     os.system(command)
 
-    # Define command that uses ffmpeg
-    command = f"ffmpeg -i '{vid_path}' -ss {tStart} -to {tEnd} -y -an -crf {qVal} -vf " \
-              f"\"crop= {r[2]}:{r[3]}:{r[0]}:{r[1]}" \
-              f",hue=s=0\" '{out_path}'"
 
-    # Run command
-    os.system(command)
+# def trimDurCropped(vid_path, out_path, r, tEnd, tStart="00:00:00", imQuality=0.75):
+#     """Creates a new video file with a trimmed duration and cropped dimensions"""
+
+#     # Quality value, on the 51-point scale used by ffmpeg
+#     qVal = 51 * (1 - imQuality)
+
+#     # Define and execute ffmpeg command
+#     # command = f"ffmpeg -i '{vid_path}' -ss {tStart} -to {tEnd} -y '{out_path}'"
+
+#     # Define command that uses ffmpeg
+#     command = f"ffmpeg -i '{vid_path}' -ss {tStart} -to {tEnd} -y -an -crf {qVal} -vf " \
+#               f"\"crop= {r[2]}:{r[3]}:{r[0]}:{r[1]}" \
+#               f",hue=s=0\" '{out_path}'"
+
+#     # Run command
+#     os.system(command)
 
 
 def convertCropped(vid_path, out_path, r, imQuality=0.75):
@@ -193,29 +410,6 @@ def maskMovie(vid_path, out_path, coord_top, coord_bot):
     print("Masked movie created:")
     print("    " + out_path)
     print(" ")
-
-
-def findROI(vid_path, fr_num=1, show_crosshair=True, from_center=True):
-    """Reads frame of video and prompts to interactively select a roi"""
-    # Define video object &  video frame
-    vid = cv.VideoCapture(vid_path)
-
-    # Get frame and select roi
-    im0 = getFrame(vid_path, fr_num)
-
-    # Create named window
-    cv.namedWindow("ROI_Select", cv.WINDOW_NORMAL)
-    cv.startWindowThread()
-
-    # Select ROI
-    r = cv.selectROI("ROI_Select", im0, show_crosshair, from_center)
-
-    # Release video capture and close window
-    vid.release()
-    cv.waitKey(1)
-    cv.destroyAllWindows()
-
-    return r
 
 
 def findCoord(vid_path, poly_overlay=False, num_pts=inf, fr_num=1):
