@@ -73,11 +73,24 @@ def vid_from_seq(imPath, vidPath=None, frStart=None, frEnd=None, fps=30, imQuali
     # Total number of frames
     nFrames = frEnd - frStart
 
+    # Figure horiz dimension, if no roi provided
+    if downSample and roi is None:
+        imFiles = glob.glob(imPath + prefix + '*' + inSuffix)
+        im = cv.imread(imFiles[0])
+        AR = im.shape[1]/im.shape[0]
+        
+    # Horiz dimension, from roi
+    elif downSample and roi is not None:
+        AR = roi[2]/roi[3]
+
+    # Find horizontal dimension, rounding down to an even number
+    horzPix = int(2*np.floor(vertPix * AR/2))
+
     # Match output with input frame rate
     fpsOut = fps
 
     # Start building the ffmpeg command
-    command = f"ffmpeg -framerate {fps} -start_number {frStart} -i {imPath}/DSC%0{nDigits}d.{inSuffix} -vframes {nFrames} "
+    command = f"ffmpeg -framerate {fps} -start_number {frStart} -i {imPath}/{prefix}%0{nDigits}d.{inSuffix} -vframes {nFrames} "
     
     # Commands for an image sequence. Note that "-loglevel quiet" makes ffmpeg less verbose. Remove that for troubleshooting
     if not vMode:
@@ -90,7 +103,7 @@ def vid_from_seq(imPath, vidPath=None, frStart=None, frEnd=None, fps=30, imQuali
     if roi is not None:
         if downSample:
             # command += f"\"crop= {r[2]}:{r[3]}:{r[0]}:{r[1]}\" "
-            command += f"-vf \"crop= {roi[2]}:{roi[3]}:{roi[0]}:{roi[1]}, scale={vertPix}:-1\" "
+            command += f"-vf \"crop= {roi[2]}:{roi[3]}:{roi[0]}:{roi[1]}, scale={vertPix}:{horzPix}\" "
         else:
             command += f"-vf \"crop= {roi[2]}:{roi[3]}:{roi[0]}:{roi[1]}\" "
     elif downSample:
@@ -151,17 +164,18 @@ def vid_convert(vInPath, vOutPath=None, frStart=None, frEnd=None, imQuality=0.75
     # Quality value, on the 51-point scale used by ffmpeg
     qVal = 51 * (1 - imQuality)
 
+    # Figure horiz dimension, if no roi provided
+    if downSample and roi is None:
+        imFiles = glob.glob(imPath + prefix + '*' + inSuffix)
+        im = cv.imread(imFiles[0])
+        AR = im.shape[1]/im.shape[0]
+        
+    # Horiz dimension, from roi
+    elif downSample and roi is not None:
+        AR = roi[2]/roi[3]
 
-
-    # # Find start and end frames, if none given
-    # if (frStart is None) or (frEnd is None):
-    #     frNums = []
-    #     # Loop thru filenames and record numbers
-    #     for cFile in imFileList:
-    #         frNums.append(int(cFile[-(len(inSuffix)+nDigits+1):-(len(inSuffix)+1)]))
-
-    # # Match output with input frame rate
-    # fpsOut = fps
+    # Find horizontal dimension, rounding down to an even number
+    horzPix = int(2*np.floor(vertPix * AR/2))
 
     # Start building the ffmpeg command
     command = f"ffmpeg -i {vInPath} "
@@ -185,7 +199,7 @@ def vid_convert(vInPath, vOutPath=None, frStart=None, frEnd=None, imQuality=0.75
     if roi is not None:
         if downSample:
             # command += f"\"crop= {r[2]}:{r[3]}:{r[0]}:{r[1]}\" "
-            command += f"-vf \"crop= {roi[2]}:{roi[3]}:{roi[0]}:{roi[1]}, scale={vertPix}:-1\" "
+            command += f"-vf \"crop= {roi[2]}:{roi[3]}:{roi[0]}:{roi[1]}, scale={vertPix}:{horzPix}\" "
         else:
             command += f"-vf \"crop= {roi[2]}:{roi[3]}:{roi[0]}:{roi[1]}\" "
     elif downSample:
