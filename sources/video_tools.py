@@ -128,14 +128,12 @@ def vid_from_seq(imPath, vidPath=None, frStart=None, frEnd=None, fps=30, imQuali
     print('    Completed writing ' + str(nFrames) + ' frames')
 
  
-def vid_convert(vInPath, vOutPath=None, frStart=None, frEnd=None, imQuality=0.75, prefix='DSC',
+def vid_convert(vInPath, vOutPath=None, imQuality=0.75, prefix='DSC',
                  nDigits=5, inSuffix='JPG', outSuffix='mp4', downSample=False, roi=None, vertPix=None, 
-                 vMode=False):
+                 vMode=True):
     """Creates a movie from an image sequence.
        vInPath (str)     - Path to input video file.
        vOutPath (str)    - Path to output video file. Defaults to same as vInPath.
-       frStart (int)     - Frame number to begin working with. Will use first frame, if not specified.
-       frEnd (int)       - Frame number to end with. Will use last frame, if not specified.
        fps (float)       - Frame rate (frames per sec) of input images. Will use same for output.
        imQuality (float) - image quality (0 - 1).
        outSuffix (str)   - Video type, given by the suffix for output movie file (if vOutPath not given).
@@ -173,8 +171,7 @@ def vid_convert(vInPath, vOutPath=None, frStart=None, frEnd=None, imQuality=0.75
     if downSample:
         # If no roi provided
         if roi is None:
-            imFiles = glob.glob(imPath + prefix + '*' + inSuffix)
-            im = cv.imread(imFiles[0])
+            im = getFrame(vInPath)
             AR = im.shape[1]/im.shape[0]
         
         # Using roi

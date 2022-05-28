@@ -1,0 +1,46 @@
+# Transferring the project between computers
+
+It may make sense to transfer the project over to a different computer at this point in the workflow. The training runs much faster on a desktop PC with a strong NVIDIA GPU. So, if you have been working on a laptop with the intent of transferring, then this is the time to do that. Take the following steps at the command line to make the transfer.
+
+## 1. Set up on the desktop machine
+
+Copy all the project files and folders over to the desktop. If the video files are stored outside of the project folder, then you'll want to be sure to copy those separately.
+
+On the desktop, you will first want to enter the environment for DLC and then enter python, something like this:
+
+    conda activate DEEPLABCUT
+    python3
+
+Then, import DLC: 
+
+    import deeplabcut as dlc
+
+## 2. Make sure the desktop and laptop are running the same DLC version
+
+Conflicts may arise if the DLC versions do not match. Therefore, check the version of both machines with the following command:
+
+    dlc.__version__
+
+If your laptop is running the latest version, then you may update DLC on the desktop, with the following command: 
+
+    pip install --upgrade git+https://github.com/deeplabcut/deeplabcut.git
+
+If the laptop version is not the latest, then a particular version of DLC may be installed on the desktop, as follows. Note that you will want to replace '2.2' with the intended version number.
+
+    pip install deeplabcut==2.2
+
+## 3. Configure dlc_run
+
+Download or copy dlc_run.ipynb to the desktop machine, adjust the definitions for dataPath and videoPath, and then run the first cell to import dlc. Make sure to do this within the DLC environment (VS Code will prompt you for this).
+
+## 4. Edit config.yaml
+
+First, make a copy of the existing config.yaml file either at the command line or in the file browser. It's possible to overwrite this file in some of the steps below. If you config.yaml with a text editor (VS Code will work), you'll see the definition for proj_path and the paths for all of the videos in the project. Edit proj_path manually for the new machine. 
+The [DLC user guide](https://deeplabcut.github.io/DeepLabCut/docs/standardDeepLabCut_UserGuide.html) says that the video paths do not need to be updated, but I don't think that's the case if you do not have a copy of the video files within the project directory. 
+
+I ended up changing the video directories because my videos were outside of the project directory. You can do this manually. However, if there are lots of files, then you could generate a new config.yaml file with the definitions using dlc.create_new_project (within [dlc_run.ipynb](/notebooks/dlc_run.ipynb)). This would require copying over the contents of copy of config.yaml that define the body parts and the other parameters that follow the video path definitions into the new config.yaml.
+
+
+## 5. Run the training
+
+You can skip to the 'Create training dataset' portion of [dlc_run.ipynb](/notebooks/dlc_run.ipynb) and then proceed from there.
