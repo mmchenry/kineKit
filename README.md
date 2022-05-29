@@ -3,7 +3,7 @@
 ## Overview
 
 Set of tools for acquiring kinematics using DeepLabCut (DLC), which allows for automated tracking of the coordinates of landmarks. 
-We aspire to make these tools approachable for investigators with no prior knowledge of python coding and the use of open-source tools. 
+We hope to make these tools approachable for investigators with no prior knowledge of python coding. 
 There are numerous ways of using DLC and other tools that we feature, but we're going to recommend a particular workflow with software selected for the task. 
 
 At this stage, we are interested only in single-animal experiments, but intend to implement the ability to extract 3D coordinates from experiments using 2 or more cameras. 
@@ -14,3 +14,6 @@ The following links provide details for each aspect of the kineKit workflow.
 ## [Setup & Installation](/docs/setup.md) 
 
 ## [Notebooks](/docs/notebooks.md)
+
+## [Using the terminal](/docs/command_line.md)
+

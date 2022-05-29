@@ -1,6 +1,6 @@
 # Setup & Installation
 
-Here we explain some of the tools that you will want to install for DLC and kineKit.
+Here we explain some of the tools that you will want to install and configure for DLC and kineKit.
 
 ## Anaconda
 

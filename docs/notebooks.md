@@ -8,4 +8,4 @@ Here's a listing of the notebooks and their major functions:
 
 1. [dlc_run](/notebooks/dlc_run.ipynb) - Steps through an initial DLC training and acquision of coordinates.
 
-Future notebooks will cover retraining and other more advanced funcitons of DLC.
+1. [dlc_evaluate](/notebooks/dlc_evaluate.ipynb) - Evaluates the network, improves it, and uses it to analyze new videos. 
