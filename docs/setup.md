@@ -18,7 +18,7 @@ Environments provide a means to manage versions of packages that are compatible 
 
 ![Open Terminal](/docs/assets/open_terminal.png)
 
-There are different programs for installing and managing packages within an environment using commands within a terminal window. Anaconda uses the 'Conda' package manager by default, but may also come across 'pip', which has similar functionality.
+There are different programs for installing and managing packages within an environment using commands within a terminal window. Anaconda uses the 'Conda' package manager by default. 'pip' is another one.
 
 You may enter an environment at the command line:
 
@@ -44,13 +44,39 @@ This should install an envronment called DEEPLABCUT that you will use henceforth
 
 Follow the same steps, but use the DEEPLABCUT_M1.yaml (download from git [here](https://github.com/DeepLabCut/DeepLabCut/tree/master/conda-environments)) to install an environment for Apple Silicon. 
 
+### Installing DLC 2.1
+
+I have run into some issues installing DLC 2.2 (2.2.1, in particular -- somthing to do with wxpython). As a workaround, here's how I installed the last version of 2.1 on an Ubuntu machine. 
+
+First, browse to the Downloads folder (cd ~/Downloads) and then download the git repository:
+
+    git clone https://github.com/DeepLabCut/DeepLabCut.git
+
+Then, checkout the last version of 2.1:
+
+    git checkout e2c80479212daea55ff0e39a900ef3678783a11b
+
+Browse to environment files:
+
+    cd DeepLabCut/conda-environments
+
+And create an environment for GPU analyses:
+
+    conda env create -f DLC-GPU.yaml
+
+This last step took some time.
+
 ### Troubleshooting
 
 DLC installation can get kind of hairy, given the variety of possible machines and operating systems. Consult the following websites if you have trouble: [How To Install DeepLabCut](https://deeplabcut.github.io/DeepLabCut/docs/installation.html), and [Installation Tips](https://deeplabcut.github.io/DeepLabCut/docs/recipes/installTips.html).
 
 ## ffmpeg
 
-ffmpeg is an open-source project that allows for the conversion of video files. It must be installed on your system if you intend to use kineKit's tools for prepping videos for DLC. First, launch a terminal window for the DLC environment from the Anaconda-Navigator, as explained above. 
+ffmpeg is an open-source project that allows for the conversion of video files. It should be installed in the DLC environment (as explained above). To check, query for the version at the command line when within the environment:
+
+    ffmpeg --version
+
+If ffmpeg is not installed . . .
 
 For MacOS, you first need to install the Homebrew package manager:
 
@@ -64,7 +90,7 @@ For linux, simply run the following command at the terminal:
 
     sudo apt install ffmpeg
 
-Windows is more complicated, but its steps are detail [here](https://www.wikihow.com/Install-FFmpeg-on-Windows).
+Windows is more complicated, but its steps are detailed [here](https://www.wikihow.com/Install-FFmpeg-on-Windows).
 
 ## VS Code
 
