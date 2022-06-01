@@ -28,7 +28,7 @@ Where \<env name\> corresponds to the title of the DLC environment (e.g., DEEPLA
 
 ## DeepLabCut (DLC)
 
-### Machine that does not use Apple Silicon
+### Linux and Windows
 
 As explained in the documentation for a Conda [DLC installation](https://deeplabcut.github.io/DeepLabCut/docs/installation.html), you can create an environment for DLC by first downloading the conda file from [here](http://www.mackenziemathislab.org/s/DEEPLABCUT.yaml). Then launch a terminal window (see above), and (using the 'cd' command) browse to the directory containing the download. On my machine, I did that as follows:
 
@@ -40,7 +40,7 @@ The, enter the following command into at the terminal window:
 
 This should install an envronment called DEEPLABCUT that you will use henceforth to run DLC and kineKit code. You can launch a terminal from within that environment following the same steps described above for the base environment.
 
-### Machine that uses Apple Silicon (e.g., M1 MacBook Air)
+### Mac with Apple Silicon (e.g., M1 MacBook Air)
 
 Follow the same steps, but use the DEEPLABCUT_M1.yaml (download from git [here](https://github.com/DeepLabCut/DeepLabCut/tree/master/conda-environments)) to install an environment for Apple Silicon. 
 
@@ -69,28 +69,6 @@ This last step took some time.
 ### Troubleshooting
 
 DLC installation can get kind of hairy, given the variety of possible machines and operating systems. Consult the following websites if you have trouble: [How To Install DeepLabCut](https://deeplabcut.github.io/DeepLabCut/docs/installation.html), and [Installation Tips](https://deeplabcut.github.io/DeepLabCut/docs/recipes/installTips.html).
-
-## ffmpeg
-
-ffmpeg is an open-source project that allows for the conversion of video files. It should be installed in the DLC environment (as explained above). To check, query for the version at the command line when within the environment:
-
-    ffmpeg --version
-
-If ffmpeg is not installed . . .
-
-For MacOS, you first need to install the Homebrew package manager:
-
-    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-
-Then, install ffmpeg:
-
-    brew install ffmpeg
-
-For linux, simply run the following command at the terminal: 
-
-    sudo apt install ffmpeg
-
-Windows is more complicated, but its steps are detailed [here](https://www.wikihow.com/Install-FFmpeg-on-Windows).
 
 ## VS Code
 
@@ -131,3 +109,25 @@ When running code in VS Code, you'll want to specify that you will be running it
 Github Source Control Provider (SCP), which is a cloud service for hosting code using the Git version control system. There's lots to learn about the workings of Git and the use of Github, but for the moment think of it as a means of distribution of kineKit and DLC. 
 
 You can simply download the latest version of the kineKit code in a ZIP archive from its [gitHub page](https://github.com/mmchenry/kineKit.git). The more advanced approach is to create a github account and to configure VS Code to download the latest versions of kineKit (outlined [here](https://code.visualstudio.com/docs/editor/versioncontrol)). A download from the cloud is accomplished by a 'Pull' command from the GitHub servers. VS Code has a 'Source Control' tab on the left-hand pallet for managing Pulls and to monitor the status of files in your local copy of the 'archive'. The archive is the current version of the code, as well as its entire history of versions.
+
+## ffmpeg
+
+ffmpeg is an open-source project that allows for the conversion of video files. It should be installed in the DLC environment (as explained above). To check, query for the version at the command line when within the environment:
+
+    ffmpeg --version
+
+If ffmpeg is not installed . . .
+
+For MacOS, you first need to install the Homebrew package manager:
+
+    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+
+Then, install ffmpeg:
+
+    brew install ffmpeg
+
+For linux, simply run the following command at the terminal: 
+
+    sudo apt install ffmpeg
+
+Windows is more complicated, but its steps are detailed [here](https://www.wikihow.com/Install-FFmpeg-on-Windows).
