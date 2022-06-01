@@ -18,7 +18,7 @@ Environments provide a means to manage versions of packages that are compatible 
 
 ![Open Terminal](/docs/assets/open_terminal.png)
 
-There are different programs for installing and managing packages within an environment using commands within a terminal window. Anaconda uses the 'Conda' package manager by default. 'pip' is another one.
+There are different programs for installing and managing packages within an environment using commands within a terminal window. Anaconda uses the 'Conda' package manager by default. 'pip' is another one.   Text 
 
 You may enter an environment at the command line:
 
