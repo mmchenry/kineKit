@@ -1,13 +1,11 @@
-# Video_tools
+# Videotools
 
-## Overview
+<!-- ## Overview -->
 
 
 
 
 ## Code catalog
-
-
 
 - **video_tools.py**: Series of functions for manipulating and interacting with video. Requires installing ffmpeg and opencv.
 
