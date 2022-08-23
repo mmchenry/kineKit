@@ -16,7 +16,7 @@ Open-source software frequently draws on code from other packages. For example, 
 
 Environments provide a means to manage versions of packages that are compatible with one-another. When you run python code within a particular environment, it uses a specific  version of the python interpreter and versions of the packages that have been explicity installed. Anaconda comes with a 'base' environment and if you browse to that in the Anaconda Navigator, then you can see all of the packages and their version number included in the base installation. In preparation for kineKit and DLC, you will want to launch a terminal window from within that environment by clicking on 'Open Terminal', which is available from the green arrow next to 'base (root)':
 
-![Open Terminal](/docs/assets/open_terminal.png)
+![Open Terminal](assets/open_terminal.png)
 
 There are different programs for installing and managing packages within an environment using commands within a terminal window. Anaconda uses the 'Conda' package manager by default. 'pip' is another one.
 
@@ -98,13 +98,13 @@ If you envision yourself editing the python code, then I also recommend doing th
 
 The json file should look something like this:
 
-![json settings](/docs/assets/json_set.png)
+![json settings](assets/json_set.png)
 
 The reason for this configuration is that VS Code will now reload a package whenever you make changes and save the code. You otherwise have to restart the kernel to load a package, which gets irritating.
 
 When running code in VS Code, you'll want to specify that you will be running it in your DLC environment, which should be an option in the upper right corner of the window when you open a .py or .ipynb file, like this:
 
-![VC Vode window](/docs/assets/vs_code_env.png)
+![VC Vode window](assets/vs_code_env.png) 
 
 ## Github
 
