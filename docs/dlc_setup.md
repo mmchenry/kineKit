@@ -1,4 +1,4 @@
-# Setup & Installation
+# Setup & Installation for DeepLabCut
 
 Here we explain some of the tools that you will want to install and configure for DLC and kineKit.
 

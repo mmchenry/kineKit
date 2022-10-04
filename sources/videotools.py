@@ -73,6 +73,13 @@ def vid_from_seq(imPath, vidPath=None, frStart=None, frEnd=None, fps=30, imQuali
     # Total number of frames
     nFrames = frEnd - frStart
 
+    # Round roi coords down to an even number of pixels
+    if roi is not None:
+        roi[0] = int(2 * np.floor(roi[0] / 2))
+        roi[1] = int(2 * np.floor(roi[1] / 2))
+        roi[2] = int(2 * np.floor(roi[2] / 2))
+        roi[3] = int(2 * np.floor(roi[3] / 2))
+
     # Figure horiz dimension
     if downSample:
         # If no roi provided
@@ -128,15 +135,12 @@ def vid_from_seq(imPath, vidPath=None, frStart=None, frEnd=None, fps=30, imQuali
     print('    Completed writing ' + str(nFrames) + ' frames')
 
  
-def vid_convert(vInPath, vOutPath=None, imQuality=0.75, prefix='DSC',
-                 nDigits=5, inSuffix='JPG', outSuffix='mp4', downSample=False, roi=None, vertPix=None, 
-                 vMode=True):
+def vid_convert(vInPath, vOutPath, imQuality=0.75, roi=None, vertPix=None, vMode=True):
     """Converts a video file, perhaps with cropping and downsampling.
        vInPath (str)     - Path to input video file.
        vOutPath (str)    - Path to output video file. Defaults to same as vInPath.
        fps (float)       - Frame rate (frames per sec) of input images. Will use same for output.
        imQuality (float) - image quality (0 - 1).
-       outSuffix (str)   - Video type, given by the suffix for output movie file (if vOutPath not given).
        downSample (bool) - Whether to downsample resolution.
        roi (int)         - Region-of-interest coordinates (in pixels): [x y w h]
        vertPix (int)     - Size of video frames in vertical pixels 
@@ -149,26 +153,22 @@ def vid_convert(vInPath, vOutPath=None, imQuality=0.75, prefix='DSC',
     # Remove audio
     noAudio = True
 
-    # Check inputs
-    if downSample and vertPix is None:
-        raise ValueError('You need to provide vertPix value, if you want to downsample the video')  
-    elif vOutPath and outSuffix is None:
-        raise ValueError('You need to provide outSuffix, if you do not specify the file name') 
-
     # Check for path
     if not os.path.isfile(vInPath):
         raise ValueError('Movie not found at given path: ' + vInPath) 
 
-    # Default to input path, if no out path provided
-    if vOutPath is None:
-        inFileName = os.path.splitext(os.path.basename(vInPath))
-        vOutPath = os.path.dirname(vInPath) + os.path.sep + inFileName[0] + '.' + outSuffix
-
     # Quality value, on the 51-point scale used by ffmpeg
     qVal = 51 * (1 - imQuality)
 
+    # Round roi coords down to an even number of pixels
+    if roi is not None:
+        roi[0] = int(2 * np.floor(roi[0] / 2))
+        roi[1] = int(2 * np.floor(roi[1] / 2))
+        roi[2] = int(2 * np.floor(roi[2] / 2))
+        roi[3] = int(2 * np.floor(roi[3] / 2))
+
     # Figure horiz dimension
-    if downSample:
+    if vertPix is not None:
         # If no roi provided
         if roi is None:
             im = get_frame(vInPath)
@@ -176,10 +176,7 @@ def vid_convert(vInPath, vOutPath=None, imQuality=0.75, prefix='DSC',
         
         # Using roi
         else:
-            # Round roi coords down to an even number of pixels
-            roi[2] = int(2*np.floor(roi[2]/2))
-            roi[3] = int(2*np.floor(roi[3]/2))
-            AR     = roi[2]/roi[3]
+            AR = roi[2]/roi[3]
 
         # Find horizontal dimension, rounding down to an even number
         horzPix = int(2*np.floor(vertPix * AR/2))
@@ -204,12 +201,12 @@ def vid_convert(vInPath, vOutPath=None, imQuality=0.75, prefix='DSC',
 
     # Add downsampling and cropping commands
     if roi is not None:
-        if downSample:
+        if vertPix is not None:
             # command += f"\"crop= {r[2]}:{r[3]}:{r[0]}:{r[1]}\" "
             command += f"-vf \"crop= {roi[2]}:{roi[3]}:{roi[0]}:{roi[1]}, scale={horzPix}:{vertPix}\" "
         else:
             command += f"-vf \"crop= {roi[2]}:{roi[3]}:{roi[0]}:{roi[1]}\" "
-    elif downSample:
+    elif vertPix is not None:
         command += f"-vf \"scale={horzPix}:{vertPix}\" "
 
     # Specify output file
@@ -222,8 +219,6 @@ def vid_convert(vInPath, vOutPath=None, imQuality=0.75, prefix='DSC',
     # Excute ffmpeg
     os.system(command)
 
-    # # Wrap up
-    # print('    Completed writing ' + str(nFrames) + ' frames')
 
 def get_frame(vid_path, fr_num=1):
     """ Reads a single frame from a video file.
