@@ -15,7 +15,7 @@ import matplotlib.pyplot as plt
 
 
 def vid_from_seq(imPath, vidPath=None, frStart=None, frEnd=None, fps=30, imQuality=0.75, prefix='DSC',
-                 nDigits=5, inSuffix='JPG', outSuffix='mp4', downSample=False, roi=None, vertPix=None, 
+                 nDigits=5, inSuffix='JPG', outSuffix='mp4', roi=None, vertPix=None, 
                  vMode=False):
     """Creates a movie from an image sequence.
        imPath (str)      - Path to directory holding image file.
@@ -34,8 +34,11 @@ def vid_from_seq(imPath, vidPath=None, frStart=None, frEnd=None, fps=30, imQuali
        vMode (bool)      - Verbose mode, shows more output from ffmpeg
     """
 
-    if downSample and vertPix is None:
-        raise ValueError('You need to provide vertPix value, if you want to downsample the video')  
+    # set downSample
+    if vertPix is None:
+        downSample = False
+    else:
+        downSample = True 
 
     # Default to pwd, if no out path
     if vidPath is None:
