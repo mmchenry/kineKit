@@ -138,7 +138,8 @@ def vid_from_seq(imPath, vidPath=None, frStart=None, frEnd=None, fps=30, imQuali
     print('    Completed writing ' + str(nFrames) + ' frames')
 
  
-def vid_convert(vInPath, vOutPath, imQuality=0.75, roi=None, vertPix=None, vMode=True):
+def vid_convert(vInPath, vOutPath, imQuality=0.75, roi=None, vertPix=None, 
+                vMode=True, maskpath=None):
     """Converts a video file, perhaps with cropping and downsampling.
        vInPath (str)     - Path to input video file.
        vOutPath (str)    - Path to output video file. Defaults to same as vInPath.
@@ -148,6 +149,7 @@ def vid_convert(vInPath, vOutPath, imQuality=0.75, roi=None, vertPix=None, vMode
        roi (int)         - Region-of-interest coordinates (in pixels): [x y w h]
        vertPix (int)     - Size of video frames in vertical pixels 
        vMode (bool)      - Verbose mode, shows more output from ffmpeg
+       maskpath          - Path to bw mask file (white is what to include)
     """
 
     # overwrite existing file

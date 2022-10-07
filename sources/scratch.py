@@ -41,7 +41,10 @@ def give_paths():
         'vidin': '/home/mmchenry/Documents/wake_tracking/video/pilot_raw',
 
         # Path to exported videos
-        'vidout': '/home/mmchenry/Documents/wake_tracking/video/pilot_compressed'
+        'vidout': '/home/mmchenry/Documents/wake_tracking/video/pilot_compressed',
+
+        # Root for project files
+        'root': '/home/mmchenry/Documents/wake_tracking'
         }
 
     else:
@@ -74,21 +77,43 @@ import acqfunctions as af
 # Extract experiment catalog info
 cat = af.get_cat_info(path['cat'])
 
-# %% Extract a single video frame
+# %%
+""" Extract a single video frame """
 
 import videotools as vt
+import cv2 as cv
 
 full_path = path['vidin'] + os.path.sep + cat.video_filename[0] + '.MOV'
 
 im = vt.get_frame(full_path)
+
+cv.imwrite(path['root'] + os.path.sep + 'frame.jpg', im)
+
+
+# %%
+""" Experiment with a mask """
+
+frame = cv.imread(path['root'] + os.path.sep + 'frame.jpg')
+mask = cv.imread(path['root'] + os.path.sep + 'tank_mask.jpg')
+
+# Convert mask to binary
+ret, bw = cv.threshold(mask, 120, 255, cv.THRESH_BINARY)
+
+masked = cv.bitwise_and(frame, frame, mask=bw[:,:,2])
+
+cv.imwrite(path['root'] + os.path.sep + 'masked.jpg', masked)
+# cv.imshow('',frame)
 
 
 
 #%%
 """ Uses kineKit to crop and compress video from catalog parameters """
 
+maskpath = path['root'] + os.path.sep + 'tank_mask.jpg'
+
 # Make the videos
-af.convert_videos(cat, path['vidin'], path['vidout'], imquality=0.75, vertpix=720)
+af.convert_videos(cat, path['vidin'], path['vidout'], imquality=0.75, vertpix=720,
+maskpath=maskpath)
 
 
 #%%
