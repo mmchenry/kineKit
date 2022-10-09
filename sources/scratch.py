@@ -22,7 +22,11 @@ def give_paths():
         'vidin': '/Users/mmchenry/Documents/Projects/waketracking/video/pilot_raw',
 
         # Path to exported videos
-        'vidout': '/Users/mmchenry/Documents/Projects/waketracking/video/pilot_compressed'
+        'vidout': '/Users/mmchenry/Documents/Projects/waketracking/video/pilot_compressed',
+
+        # Mask file
+        'mask': '/Users/mmchenry/Documents/Projects/waketracking/masks/tank_mask.png'
+
         }
 
     elif platform.system() == 'Linux' and os.path.isdir('/home/mmchenry/'):
@@ -43,8 +47,8 @@ def give_paths():
         # Path to exported videos
         'vidout': '/home/mmchenry/Documents/wake_tracking/video/pilot_compressed',
 
-        # Root for project files
-        'root': '/home/mmchenry/Documents/wake_tracking'
+        # Mask file
+        'mask': '/home/mmchenry/Documents/Projects/waketracking/masks/tank_mask.png'
         }
 
     else:
@@ -77,43 +81,30 @@ import acqfunctions as af
 # Extract experiment catalog info
 cat = af.get_cat_info(path['cat'])
 
-# %%
-""" Extract a single video frame """
+# %% Extract a single video frame
 
 import videotools as vt
-import cv2 as cv
 
 full_path = path['vidin'] + os.path.sep + cat.video_filename[0] + '.MOV'
 
 im = vt.get_frame(full_path)
 
-cv.imwrite(path['root'] + os.path.sep + 'frame.jpg', im)
-
-
-# %%
-""" Experiment with a mask """
-
-frame = cv.imread(path['root'] + os.path.sep + 'frame.jpg')
-mask = cv.imread(path['root'] + os.path.sep + 'tank_mask.jpg')
-
-# Convert mask to binary
-ret, bw = cv.threshold(mask, 120, 255, cv.THRESH_BINARY)
-
-masked = cv.bitwise_and(frame, frame, mask=bw[:,:,2])
-
-cv.imwrite(path['root'] + os.path.sep + 'masked.jpg', masked)
-# cv.imshow('',frame)
-
-
 
 #%%
 """ Uses kineKit to crop and compress video from catalog parameters """
 
-maskpath = path['root'] + os.path.sep + 'tank_mask.jpg'
+# TODO: Make temporary folder for the masked videos, have masked videos saved there
+# TODO: Add ability to read mask filename in acqfunctions
 
-# Make the videos
-af.convert_videos(cat, path['vidin'], path['vidout'], imquality=0.75, vertpix=720,
-maskpath=maskpath)
+# Make the masked videos
+af.convert_masked_videos(cat, in_path=path['vidin'], out_path=path['vidout'], imquality=0.75, vertpix=720, maskpath=path['mask'])
+
+# TODO: Feed masked videos into convert_videos
+
+# Make the downsampled/cropped videos
+af.convert_videos(cat, in_path=path['vidin'], out_path=path['vidout'], imquality=0.75, vertpix=720, maskpath=path['mask'])
+
+# TODO: Delete temporary folder with masked videos
 
 
 #%%

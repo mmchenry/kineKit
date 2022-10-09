@@ -145,12 +145,24 @@ def vid_convert(vInPath, vOutPath, imQuality=0.75, roi=None, vertPix=None,
        vOutPath (str)    - Path to output video file. Defaults to same as vInPath.
        fps (float)       - Frame rate (frames per sec) of input images. Will use same for output.
        imQuality (float) - image quality (0 - 1).
-       downSample (bool) - Whether to downsample resolution.
        roi (int)         - Region-of-interest coordinates (in pixels): [x y w h]
        vertPix (int)     - Size of video frames in vertical pixels 
        vMode (bool)      - Verbose mode, shows more output from ffmpeg
-       maskpath          - Path to bw mask file (white is what to include)
+       maskpath          - Path to PNG mask file (transparent pixels are for visible parts of video)
+
+       Note: if you are masking a video, you cannot downsample or crop it
     """
+
+    # Check for crop, downsampling, and masking
+    if (maskpath is not None) and (roi is not None):
+        raise ValueError('You cannot both crop and mask the video -- pick one.')
+    elif (maskpath is not None) and (vertPix is not None):
+        raise ValueError('You cannot both downsample and mask the video -- pick one.')
+
+    # Check extension of mask
+    pathparts = os.path.splitext(maskpath)
+    if pathparts[1] != '.png':
+        raise ValueError('Mask file needs to be PNG format, with some transparent pixels')
 
     # overwrite existing file
     overWrite = True
@@ -189,6 +201,10 @@ def vid_convert(vInPath, vOutPath, imQuality=0.75, roi=None, vertPix=None,
     # Start building the ffmpeg command
     command = f"ffmpeg -i {vInPath} "
 
+    # If there is a mask
+    if (maskpath is not None):
+        command += f"-i {maskpath} -filter_complex \"[0:v][1:v] overlay=0:0\" "
+
     # Whether to overwrite existing file
     if overWrite:
         command += "-y "
@@ -213,6 +229,7 @@ def vid_convert(vInPath, vOutPath, imQuality=0.75, roi=None, vertPix=None,
             command += f"-vf \"crop= {roi[2]}:{roi[3]}:{roi[0]}:{roi[1]}\" "
     elif vertPix is not None:
         command += f"-vf \"scale={horzPix}:{vertPix}\" "
+
 
     # Specify output file
     command += f"-timecode 00:00:00:00 '{vOutPath}'"
