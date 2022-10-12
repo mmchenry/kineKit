@@ -138,8 +138,8 @@ def vid_from_seq(imPath, vidPath=None, frStart=None, frEnd=None, fps=30, imQuali
     print('    Completed writing ' + str(nFrames) + ' frames')
 
  
-def vid_convert(vInPath, vOutPath, imQuality=0.75, roi=None, vertPix=None, 
-                vMode=True, maskpath=None):
+def vid_convert(vInPath, vOutPath, imQuality=1, roi=None, vertPix=None, 
+                vMode=True, maskpath=None, para_mode=False, echo=True):
     """Converts a video file, perhaps with cropping and downsampling.
        vInPath (str)     - Path to input video file.
        vOutPath (str)    - Path to output video file. Defaults to same as vInPath.
@@ -149,6 +149,7 @@ def vid_convert(vInPath, vOutPath, imQuality=0.75, roi=None, vertPix=None,
        vertPix (int)     - Size of video frames in vertical pixels 
        vMode (bool)      - Verbose mode, shows more output from ffmpeg
        maskpath          - Path to PNG mask file (transparent pixels are for visible parts of video)
+       para_mode         - Mode for parallel processing, where the unix command is not executed
 
        Note: if you are masking a video, you cannot downsample or crop it
     """
@@ -160,9 +161,10 @@ def vid_convert(vInPath, vOutPath, imQuality=0.75, roi=None, vertPix=None,
         raise ValueError('You cannot both downsample and mask the video -- pick one.')
 
     # Check extension of mask
-    pathparts = os.path.splitext(maskpath)
-    if pathparts[1] != '.png':
-        raise ValueError('Mask file needs to be PNG format, with some transparent pixels')
+    if maskpath is not None:
+        pathparts = os.path.splitext(maskpath)
+        if pathparts[1] != '.png':
+            raise ValueError('Mask file needs to be PNG format, with some transparent pixels')
 
     # overwrite existing file
     overWrite = True
@@ -235,11 +237,14 @@ def vid_convert(vInPath, vOutPath, imQuality=0.75, roi=None, vertPix=None,
     command += f"-timecode 00:00:00:00 '{vOutPath}'"
 
     # # Report attempt
-    # print('    Reading images from: ' + imPath)
-    print('    Making output movie file: ' + vOutPath)
+    if echo:
+        print('    Making output movie file: ' + vOutPath)
 
-    # Excute ffmpeg
-    os.system(command)
+    if not para_mode:
+        # Excute ffmpeg
+        os.system(command)
+
+    return command
 
 
 def get_frame(vid_path, fr_num=1):

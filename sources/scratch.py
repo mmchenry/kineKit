@@ -1,5 +1,7 @@
 # %% 
-""" Path function """
+""" Path function 
+-----------------------------------------------------------------------------------------------------
+"""
 
 import platform
 
@@ -8,57 +10,50 @@ def give_paths():
     # These are the paths on Matt's laptop
     if platform.system() == 'Darwin' and os.path.isdir('/Users/mmchenry/'):
 
-        paths = {
-        # Path to kineKit code
-        'kinekit':  '/Users/mmchenry/Documents/code/kineKit', 
+        root_code = '/Users/mmchenry/Documents/code'
+        root_proj = '/Users/mmchenry/Documents/Projects/waketracking'
 
-        # Path to experiment catalog file
-        'cat': '/Users/mmchenry/Documents/Projects/waketracking/expt_catalog.csv', 
-
-        # Path to experiment catalog file
-        'data': '/Users/mmchenry/Documents/Projects/waketracking/data',
-
-        # Path to raw videos
-        'vidin': '/Users/mmchenry/Documents/Projects/waketracking/video/pilot_raw',
-
-        # Path to exported videos
-        'vidout': '/Users/mmchenry/Documents/Projects/waketracking/video/pilot_compressed',
-
-        # Mask file
-        'mask': '/Users/mmchenry/Documents/Projects/waketracking/masks/tank_mask.png'
-
-        }
-
+    # Matt on Linux
     elif platform.system() == 'Linux' and os.path.isdir('/home/mmchenry/'):
 
-        paths = {
-        # Path to kineKit code
-        'kinekit': '/home/mmchenry/code/kineKit',
+        root_code = '/home/mmchenry/code'
+        root_proj = '/home/mmchenry/Documents/wake_tracking'
 
-        # Path to experiment catalog file
-        'cat': '/home/mmchenry/Documents/wake_tracking/expt_catalog.csv',
-
-        # Path to output data
-        'data': '/home/mmchenry/Documents/wake_tracking/data/',
-
-        # Path to raw videos
-        'vidin': '/home/mmchenry/Documents/wake_tracking/video/pilot_raw',
-
-        # Path to exported videos
-        'vidout': '/home/mmchenry/Documents/wake_tracking/video/pilot_compressed',
-
-        # Mask file
-        'mask': '/home/mmchenry/Documents/Projects/waketracking/masks/tank_mask.png'
-        }
-
+    # Catch alternatives
     else:
         raise ValueError('Do not recognize this account -- add lines of code to define paths here')
+
+    # Directory structure wrt root folders
+    paths = {
+        # Path to kineKit code
+        'kinekit':  root_code + os.sep + 'kineKit', 
+
+        # Path to experiment catalog file
+        'cat': root_proj + os.sep + 'experiment_log.csv', 
+
+        # Path to experiment catalog file
+        'data': root_proj + os.sep + 'data',
+
+        # Path to raw videos
+        'vidin': root_proj + os.sep + 'video' + os.sep + 'raw',
+
+        # Path to exported videos
+        'vidout': root_proj + os.sep + 'video' + os.sep + 'compressed',
+
+        # Mask file
+        'mask': root_proj + os.sep + 'masks',
+
+        # Temporary video
+        'tmp': root_proj + os.sep + 'video' + os.sep + 'tmp'
+        }
 
     return paths
 
 
 #%%
-""" Parameters and packages """
+""" Parameters and packages 
+-----------------------------------------------------------------------------------------------------
+"""
 import sys
 import os
 # import def_definepaths as dd
@@ -81,34 +76,136 @@ import acqfunctions as af
 # Extract experiment catalog info
 cat = af.get_cat_info(path['cat'])
 
-# %% Extract a single video frame
+# Raw video extension
+vid_ext_raw = 'MOV'
 
-import videotools as vt
+# Number of cores to use for parallel processing
+num_cores = 8
 
-full_path = path['vidin'] + os.path.sep + cat.video_filename[0] + '.MOV'
+# %%
 
-im = vt.get_frame(full_path)
+# def batch_command(cmds):
+#     # import time
+#     import ipyparallel as ipp
+#     import sys
+
+#     # Report python and IPyparallel versions to make sure they exist
+#     # print("Python Version : ", sys.version)
+#     # print("IPyparallel Version : ", ipp.__version__)
+
+#     # Set up clients 
+#     client = ipp.Client()
+#     type(client), client.ids
+
+#     # Direct view allows shared data (balanced_view is the alternative)
+#     direct_view = client[:]
+
+#     # Function to execute the code
+#     def run_command(idx):
+#         import os
+#         os.system(cmds_run.command[idx])
+#         return idx
+
+#     direct_view["cmds_run"] = cmds
+
+#     res = []
+#     for n in range(len(direct_view)):
+#         res.append(client[n].apply(run_command, n))
+
+# %%
+
+def batch_command(cmds):
+    # import time
+    import ipyparallel as ipp
+    import sys
+
+    # Report python and IPyparallel versions to make sure they exist
+    # print("Python Version : ", sys.version)
+    # print("IPyparallel Version : ", ipp.__version__)
+
+    # Set up clients 
+    client = ipp.Client()
+    type(client), client.ids
+
+    # Direct view allows shared data (balanced_view is the alternative)
+    direct_view = client[:]
+
+    # Function to execute the code
+    def run_command(idx):
+        import os
+        os.system(cmds_run.command[idx])
+        return idx
+
+    direct_view["cmds_run"] = cmds
+
+    res = []
+    for n in range(len(direct_view)):
+        res.append(client[n].apply(run_command, n))
+
+#%%
+""" Uses kineKit to crop and compress video from catalog parameters 
+-----------------------------------------------------------------------------------------------------
+"""
+# Extract experiment catalog info
+cat = af.get_cat_info(path['cat'])
+
+# Make the masked videos (stored in 'tmp' directory)
+print(' ')
+print('=====================================================')
+print('First, creating masked videos . . .')
+cmds = af.convert_masked_videos(cat, in_path=path['vidin'], out_path=path['tmp'], maskpath=path['mask'], vmode=False, 
+                         imquality=1, num_cores=num_cores)
+
+# Run FFMPEG commands in parallel
+batch_command(cmds)
+
+# [r.result() for r in res]
+
+
+# %%
+# Make the downsampled/cropped videos  (stored in 'pilot_compressed' directory)
+print(' ')
+print('=====================================================')
+print('Second, creating downsampled and cropped videos . . .')
+af.convert_videos(cat, in_path=path['tmp'], out_path=path['vidout'], vmode=False, imquality=0.75, vertpix=720, suffix_in='mp4')
+
+# Survey resulting directories 
+# Loop thru each video listed in cat
+print(' ')
+print('=====================================================')
+print('Surveying results . . .')
+for c_row in cat.index:
+    # Input video path
+    vid_in_path = path['vidin'] + os.sep + cat.video_filename[c_row] + '.' + os.sep + vid_ext_raw
+
+    # Temp video path
+    vid_tmp_path = path['tmp'] + os.sep + cat.video_filename[c_row] + '.mp4'
+
+    # Output video path
+    vid_out_path = path['vidout'] + os.sep + cat.video_filename[c_row] + '.mp4'
+
+    # Check that output file was made
+    if not os.path.isfile(vid_out_path):
+
+        print('   Output movie NOT created successfully: ' + vid_out_path)
+
+        if os.path.isfile(vid_tmp_path):
+            print('   Also, temp. movie NOT created successfully: ' + vid_tmp_path)
+        else:
+            print('   But, temp. movie created successfully: ' + vid_tmp_path)
+    else:
+
+        print('   Output movie created successfully: ' + vid_out_path)
+
+        # Delete temp file
+        if os.path.isfile(vid_tmp_path):
+            os.remove(vid_tmp_path)
 
 
 #%%
-""" Uses kineKit to crop and compress video from catalog parameters """
-
-# TODO: Make temporary folder for the masked videos, have masked videos saved there
-# TODO: Add ability to read mask filename in acqfunctions
-
-# Make the masked videos
-af.convert_masked_videos(cat, in_path=path['vidin'], out_path=path['vidout'], imquality=0.75, vertpix=720, maskpath=path['mask'])
-
-# TODO: Feed masked videos into convert_videos
-
-# Make the downsampled/cropped videos
-af.convert_videos(cat, in_path=path['vidin'], out_path=path['vidout'], imquality=0.75, vertpix=720, maskpath=path['mask'])
-
-# TODO: Delete temporary folder with masked videos
-
-
-#%%
-""" Acquire the pixel intensity from movies in cat """
+""" Acquire the pixel intensity from movies in cat 
+-----------------------------------------------------------------------------------------------------
+"""
 
 # # import videotools as vt
 # import cv2 as cv  # openCV for interacting with video
@@ -122,7 +219,9 @@ da.measure_pixintensity(cat, path['data'], path['vidout'])
 
 
 #%%
-""" Plot pixel intensity for each video analyzed """
+""" Plot pixel intensity for each video analyzed 
+-----------------------------------------------------------------------------------------------------
+"""
 
 import pandas as pd
 import glob
@@ -147,4 +246,12 @@ for c_row in cat.index:
     fig.show()
 
 
-# %%
+
+# %% 
+""" Extract a single video frame """
+
+import videotools as vt
+
+full_path = path['vidin'] + os.path.sep + cat.video_filename[0] + '.' + os.sep + vid_ext_raw
+
+im = vt.get_frame(full_path)
