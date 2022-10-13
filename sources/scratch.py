@@ -115,13 +115,10 @@ num_cores = 8
 # %%
 
 def batch_command(cmds):
-    # import time
-    import ipyparallel as ipp
-    import sys
+    """ Runs a series of command-line instructions (in cmds dataframe) in parallel """
 
-    # Report python and IPyparallel versions to make sure they exist
-    # print("Python Version : ", sys.version)
-    # print("IPyparallel Version : ", ipp.__version__)
+    import ipyparallel as ipp
+    import subprocess
 
     # Set up clients 
     client = ipp.Client()
@@ -133,14 +130,20 @@ def batch_command(cmds):
     # Function to execute the code
     def run_command(idx):
         import os
-        os.system(cmds_run.command[idx])
-        return idx
+        output = os.system(cmds_run.command[idx])
+        # output = subprocess.run(cmds_run.command[idx], capture_output=True)
+        # result = output.stdout.decode("utf-8")
+        return output
+        # return idx
 
     direct_view["cmds_run"] = cmds
 
     res = []
     for n in range(len(direct_view)):
         res.append(client[n].apply(run_command, n))
+    
+    return res
+
 
 #%%
 """ Uses kineKit to crop and compress video from catalog parameters 
@@ -154,10 +157,10 @@ print(' ')
 print('=====================================================')
 print('First, creating masked videos . . .')
 cmds = af.convert_masked_videos(cat, in_path=path['vidin'], out_path=path['tmp'], maskpath=path['mask'], vmode=False, 
-                         imquality=1, num_cores=num_cores)
+                         imquality=1, para_mode=False, echo=True)
 
 # Run FFMPEG commands in parallel
-batch_command(cmds)
+# batch_command(cmds)
 
 # [r.result() for r in res]
 

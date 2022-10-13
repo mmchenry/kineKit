@@ -9,11 +9,15 @@ def report_version():
 
     print("v.6")
 
-def get_cat_info(cat_path):
+def get_cat_info(cat_path, include_mode='both'):
     """ Extracts key parameters from experiment catalog for making videos from image sequence.
     Videos included are the ones where analyze==1 and make_video==1.
+
+    Column names must include 'date', 'trial_num', 'analyze', and 'make_video'
     
     cat_path:  Full path to video catalog (CSV file)
+    include_mode: Criteria for what to include. Can be 'analyze', 'make_video', or 'both'
+
     """
 
     # Open CSV file
@@ -22,75 +26,82 @@ def get_cat_info(cat_path):
     # Import CSV data
     d = pd.read_csv(file)
 
-    # Extract only the 'analyze==1' rows
-    d = d.loc[(d.analyze == 1) & (d.make_video == 1)]
+    # Determine which rows to include
+    if include_mode=='both':
+        d = d.loc[(d.analyze == 1) & (d.make_video == 1)]
+    elif include_mode=='analyze':
+        d = d.loc[(d.analyze == 1)]
+    elif include_ode=='make_video':
+        d = d.loc[(d.make_video == 1)]
 
     # Reset indices for the new rows
     d = d.reset_index(drop=True)
+
+    df = d
 
     # df2.set_index(pd.Index([0, 1, 2]))
     # Number of videos to analyze
     # nVids = int(np.nansum(d.analyze))
 
-    # Extract mandatory parameters
-    date = d.date.astype(str)
-    trial_num = d.trial_num.astype(int)
+    # # Extract mandatory parameters
+    # date = d.date.astype(str)
+    # trial_num = d.trial_num.astype(int)
 
-    # fps
-    if 'fps' in d.columns:
-        fps_in = d.fps.astype(float)
-    else:
-        fps_in = np.nan
+    # # fps
+    # if 'fps' in d.columns:
+    #     fps_in = d.fps.astype(float)
+    # else:
+    #     fps_in = np.nan
 
-    # mask filename
-    if 'mask_filename' in d.columns:
-        mask_filename = d.mask_filename.astype(str)
-    else:
-        mask_filename = ' '
+    # # mask filename
+    # if 'mask_filename' in d.columns:
+    #     mask_filename = d.mask_filename.astype(str)
+    # else:
+    #     mask_filename = ' '
 
-    # If roi is provided. Imported as str, to allow for empty cells. Converted to int in next cell
-    if 'roi_x' in d:
-        roi_x = d.roi_x.astype(str)
-        roi_y = d.roi_y.astype(str)
-        roi_w = d.roi_w.astype(str)
-        roi_h = d.roi_h.astype(str)
+    # # If roi is provided. Imported as str, to allow for empty cells. Converted to int in next cell
+    # if 'roi_x' in d:
+    #     roi_x = d.roi_x.astype(str)
+    #     roi_y = d.roi_y.astype(str)
+    #     roi_w = d.roi_w.astype(str)
+    #     roi_h = d.roi_h.astype(str)
 
-    else:
-        roi_x = pd.Series(index=d.index, dtype="str")
-        roi_y = roi_x
-        roi_w = roi_x
-        roi_h = roi_x
+    # else:
+    #     roi_x = pd.Series(index=d.index, dtype="str")
+    #     roi_y = roi_x
+    #     roi_w = roi_x
+    #     roi_h = roi_x
 
-    # If image filenames are included
-    if 'start_image_filename' in d:
-        start_imagename = d.start_image_filename.astype(str)
-        end_imagename = d.end_image_filename.astype(str)
-    else:
-        start_imagename = None
-        end_imagename = None
+    # # If image filenames are included
+    # if 'start_image_filename' in d:
+    #     start_imagename = d.start_image_filename.astype(str)
+    #     end_imagename = d.end_image_filename.astype(str)
+    # else:
+    #     start_imagename = None
+    #     end_imagename = None
 
-    if 'video_filename' in d:
-        video_filename = d.video_filename.astype(str)
-    else:
-        video_filename = None
+    # if 'video_filename' in d:
+    #     video_filename = d.video_filename.astype(str)
+    # else:
+    #     video_filename = None
 
-    # Close CSV file
-    file.close()
+    # # Close CSV file
+    # file.close()
 
-    d_frame = {'date': date,
-               'exp_num': trial_num,
-               'fps': fps_in,
-               'video_filename': video_filename,
-               'roi_x': roi_x,
-               'roi_y': roi_y,
-               'roi_w': roi_w,
-               'roi_h': roi_h,
-               'start_imagename': start_imagename,
-               'end_imagename': end_imagename,
-               'mask_filename': mask_filename
-               }
+    # d_frame = {'date': date,
+    #            'exp_num': trial_num,
+    #            'fps': fps_in,
+    #            'video_filename': video_filename,
+    #            'roi_x': roi_x,
+    #            'roi_y': roi_y,
+    #            'roi_w': roi_w,
+    #            'roi_h': roi_h,
+    #            'start_imagename': start_imagename,
+    #            'end_imagename': end_imagename,
+    #            'mask_filename': mask_filename
+    #            }
 
-    df = pd.DataFrame(d_frame)
+    # df = pd.DataFrame(d_frame)
 
     return df
 
@@ -273,7 +284,7 @@ def convert_masked_videos(df, in_path, out_path, maskpath, out_name=None, vmode=
             cmds = pd.concat([cmds, cmds_c], sort=False, ignore_index=True)
         else:
             cmds = cmd
-            
+
         if echo:
             # Report counter
             print('Finished with ' + str(c_row + 1) + ' of ' + str(len(df)) + ' videos.')
