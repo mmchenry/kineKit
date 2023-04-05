@@ -145,8 +145,7 @@ def convert_videos(df, in_path, out_path, out_name=None, in_name=None,
 
         # filename via date_trial system
         if (in_name=='date_trial') or (out_name == 'date_trial'):
-            trialnum = str(int(df.trial_num[c_row]))
-            trialnum = '00' + trialnum[-3:]
+            trialnum = format(int(df.trial_num[c_row]),'03')
             datetrial_name = df.date[c_row] + '_' + trialnum
 
         # Input path
@@ -226,13 +225,16 @@ def convert_masked_videos(df, in_path, out_path, maskpath, in_name=None,
 
         # filename via date_trial system
         if (in_name=='date_trial') or (out_name == 'date_trial'):
-            trialnum = str(int(df.trial_num[c_row]))
-            trialnum = '00' + trialnum[-3:]
+            # trialnum = str(int(df.trial_num[c_row]))
+            trialnum = format(int(df.trial_num[c_row]),'03')
+            # trialnum = '00' + trialnum[-3:]
             datetrial_name = df.date[c_row] + '_' + trialnum
+
+# format(int(cat.trial_num[vid_index]),'03')
 
         # Input path
         if in_name=='date_trial':
-            tot_in_path = in_path + os.sep + datetrial_name + '.' + suffix_in
+            tot_in_path = in_path + os.sep + df.date[c_row] + os.sep + datetrial_name + '.' + suffix_in
         else:
             # Total input path (video dir path + filename)
             tot_in_path = in_path + os.sep + df.date[c_row] + os.sep + df.video_filename[c_row] + '.' + suffix_in

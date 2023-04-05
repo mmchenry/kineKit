@@ -28,7 +28,6 @@ def vid_from_seq(imPath, vidPath=None, frStart=None, frEnd=None, fps=30, imQuali
        nDigits (int)     - Number of digits in image filenames.
        inSuffix (str)    - Suffix of image file names.
        outSuffix (str)   - Suffix for movie file.
-       downSample (bool) - Whether to downsample resolution.
        roi (int)         - Region-of-interest coordinates (in pixels): [x y w h]
        vertPix (int)     - Size of video frames in vertical pixels 
        vMode (bool)      - Verbose mode, shows more output from ffmpeg
@@ -256,7 +255,7 @@ def get_frame(vid_path, fr_num=1):
 
     # Check for file existance
     if not os.path.isfile(vid_path):
-        raise Exception("Video file does not exist")
+        raise Exception("Video file does not exist at: " + vid_path)
 
     # Define video object &  video frame
     vid = cv.VideoCapture(vid_path)
