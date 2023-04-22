@@ -148,19 +148,42 @@ def convert_videos(df, in_path, out_path, out_name=None, in_name=None,
             trialnum = format(int(df.trial_num[c_row]),'03')
             datetrial_name = df.date[c_row] + '_' + trialnum
 
+        elif (in_name=='date_sch_trial') or (out_name == 'date_sch_trial'):
+            trialnum = format(int(df.trial_num[c_row]),'03')
+            schnum = format(int(df.sch_num[c_row]),'03')
+            datetrial_name = df.date[c_row] + '_sch' + schnum + '_tr' + trialnum
+
         # Input path
-        if in_name=='date_trial':
+        if (in_name=='date_trial') or (in_name=='date_sch_trial'):
             tot_in_path = in_path + os.sep + datetrial_name + '.' + suffix_in
         else:
             # Total input path (video dir path + filename)
             tot_in_path = in_path + os.sep + df.date[c_row] + os.sep + df.video_filename[c_row] + '.' + suffix_in
 
         # Total output path (video dir path + filename)
-        if out_name == 'date_trial':    
+        if (out_name == 'date_trial') or (out_name == 'date_sch_trial'):    
             tot_out_path = out_path + os.sep + datetrial_name + '.' + suffix_out
         else:
-            tot_out_path = out_path + os.sep + df.video_filename[c_row] + '.' + suffix_out
-            # tot_out_path = out_path + os.sep + os.path.splitext(os.path.basename(in_path))[0] + '.' + suffix_out
+            tot_out_path = out_path + os.sep + df.video_filename[c_row] + '.' + suffix_out     
+
+        # # filename via date_trial system
+        # if (in_name=='date_trial') or (out_name == 'date_trial'):
+        #     trialnum = format(int(df.trial_num[c_row]),'03')
+        #     datetrial_name = df.date[c_row] + '_' + trialnum
+
+        # # Input path
+        # if in_name=='date_trial':
+        #     tot_in_path = in_path + os.sep + datetrial_name + '.' + suffix_in
+        # else:
+        #     # Total input path (video dir path + filename)
+        #     tot_in_path = in_path + os.sep + df.date[c_row] + os.sep + df.video_filename[c_row] + '.' + suffix_in
+
+        # # Total output path (video dir path + filename)
+        # if out_name == 'date_trial':    
+        #     tot_out_path = out_path + os.sep + datetrial_name + '.' + suffix_out
+        # else:
+        #     tot_out_path = out_path + os.sep + df.video_filename[c_row] + '.' + suffix_out
+        #     # tot_out_path = out_path + os.sep + os.path.splitext(os.path.basename(in_path))[0] + '.' + suffix_out
 
         # Check for source video
         if not os.path.isfile(tot_in_path):
@@ -225,22 +248,23 @@ def convert_masked_videos(df, in_path, out_path, maskpath, in_name=None,
 
         # filename via date_trial system
         if (in_name=='date_trial') or (out_name == 'date_trial'):
-            # trialnum = str(int(df.trial_num[c_row]))
             trialnum = format(int(df.trial_num[c_row]),'03')
-            # trialnum = '00' + trialnum[-3:]
             datetrial_name = df.date[c_row] + '_' + trialnum
 
-# format(int(cat.trial_num[vid_index]),'03')
+        elif (in_name=='date_sch_trial') or (out_name == 'date_sch_trial'):
+            trialnum = format(int(df.trial_num[c_row]),'03')
+            schnum = format(int(df.sch_num[c_row]),'03')
+            datetrial_name = df.date[c_row] + '_sch' + schnum + '_tr' + trialnum
 
         # Input path
-        if in_name=='date_trial':
+        if (in_name=='date_trial') or (in_name=='date_sch_trial'):
             tot_in_path = in_path + os.sep + df.date[c_row] + os.sep + datetrial_name + '.' + suffix_in
         else:
             # Total input path (video dir path + filename)
             tot_in_path = in_path + os.sep + df.date[c_row] + os.sep + df.video_filename[c_row] + '.' + suffix_in
 
         # Total output path (video dir path + filename)
-        if out_name == 'date_trial':    
+        if (out_name == 'date_trial') or (out_name == 'date_sch_trial'):    
             tot_out_path = out_path + os.sep + datetrial_name + '.' + suffix_out
         else:
             tot_out_path = out_path + os.sep + df.video_filename[c_row] + '.' + suffix_out            
